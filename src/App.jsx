@@ -72,7 +72,7 @@ export default function App() {
   const start = (safePage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
+   
   function selectTable(key) {
     setCurrentKey(key);
     setCurrentPage(1);
@@ -152,9 +152,10 @@ export default function App() {
 
   const columnLabels = columns.map((f) => f.label || f.key);
 
+
   return (
     <div className="zzc-app">
-      <Sidebar currentKey={currentKey} onSelect={selectTable} />
+      <Sidebar currentKey={currentKey} onSelect={selectTable}/>
 
       <main className="zzc-main">
         <TopBar

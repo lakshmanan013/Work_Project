@@ -64,7 +64,7 @@ class PetParent(Base):
     email = Column(String(100) , unique = True, nullable =False)
     phone = Column(String(30))
     city = Column(String(150))
-    created_at = Column(DateTime ,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Pet(Base):
     __tablename__ = "pets"
     id = Column(Integer,primary_key= True , index=True)
@@ -106,7 +106,7 @@ class UserRole(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)
     role = Column(String(100), nullable=False)
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Doctor(Base):
     __tablename__ = "doctors"
     id = Column(Integer, primary_key=True, index=True)
@@ -144,7 +144,7 @@ class DoctorDocument(Base):
     doctor_id = Column(Integer,ForeignKey("doctors.id"),nullable=False)
     document_type = Column(String(100), nullable=False)
     status = Column(String(50), default="pending")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Appointment(Base):
     __tablename__ = "appointments"
     id = Column(Integer, primary_key=True, index=True)
@@ -163,14 +163,14 @@ class Consultation(Base):
     consultation_mode = Column(String(100))
     diagnosis = Column(String(500))
     follow_up_date = Column(Date)
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Prescription(Base):
     __tablename__ = "prescriptions"
     id = Column(Integer, primary_key=True, index=True)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=False)
     pet_id = Column(Integer, ForeignKey("pets.id"), nullable=False)
     valid_until = Column(Date)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class ServiceProvider(Base):
     __tablename__ = "service_providers"
     id = Column(Integer, primary_key=True, index=True)
@@ -234,7 +234,7 @@ class Brand(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class SellerStore(Base):
     __tablename__ = "seller_stores"
     id = Column(Integer, primary_key=True, index=True)
@@ -301,7 +301,7 @@ class Payment(Base):
     gateway = Column(String(100))
     status = Column(String(50), default="pending")
     webhook_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Refund(Base):
     __tablename__ = "refunds"
     id = Column(Integer, primary_key=True, index=True)
@@ -309,7 +309,7 @@ class Refund(Base):
     amount = Column(Float, default=0)
     reason = Column(String(500))
     status = Column(String(50), default="pending")
-    created_at =Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Payout(Base):
     __tablename__ = "payouts"
     id = Column(Integer, primary_key=True, index=True)
@@ -343,7 +343,7 @@ class Review(Base):
     rating = Column(Float)
     review_text = Column(String(1000))
     status = Column(String(50), default="pending")
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
@@ -351,7 +351,7 @@ class Notification(Base):
     title = Column(String(200), nullable=False)
     channel = Column(String(100))
     is_read = Column(Boolean, default=False)
-    created_at =Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class MembershipPlan(Base):
     __tablename__ = "membership_plans"
     id = Column(Integer, primary_key=True, index=True)
@@ -379,7 +379,7 @@ class SupportTicket(Base):
     subject = Column(String(300), nullable=False)
     category = Column(String(100))
     status = Column(String(50), default="open")
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class GeocodingCache(Base):
     __tablename__ = "geocoding_cache"
     id = Column(Integer, primary_key=True, index=True)
@@ -393,7 +393,7 @@ class AuditLog(Base):
     action = Column(String(100), nullable=False)
     entity_type = Column(String(100))
     entity_id = Column(Integer)
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class SalesExecutive(Base):
     __tablename__ = "sales_executives"
     id = Column(Integer, primary_key=True, index=True)
@@ -412,7 +412,7 @@ class PincodeCoverage(Base):
     pincode = Column(String(20), nullable=False)
     city = Column(String(150))
     state = Column(String(150))
-    created_at =Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 class ExecutiveTask(Base):
     __tablename__ = "executive_tasks"
     id = Column(Integer, primary_key=True, index=True)
@@ -431,7 +431,7 @@ class ExecutiveAlert(Base):
     entity_type = Column(String(100))
     pincode = Column(String(20))
     is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime,default=datetime.utcnow)
+    created_at = Column(DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
 Base.metadata.create_all(bind=engine)
 class PetParentCreate(BaseModel):
     full_name: str
