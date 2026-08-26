@@ -15,6 +15,7 @@ import TopBar from "./components/TopBar.jsx";
 import StatsGrid from "./components/StatsGrid.jsx";
 import DataTable from "./components/DataTable.jsx";
 import RecordModal from "./components/RecordModal.jsx";
+import Dashboard from "./components/Dashboard.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -26,7 +27,7 @@ export default function App() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("data");
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "data"
   const [modalMode, setModalMode] = useState(null); // null | "new" | "edit"
   const [editingRecord, setEditingRecord] = useState(null);
   const [formValues, setFormValues] = useState({});
@@ -191,13 +192,15 @@ export default function App() {
           </div>
         )}
 
+        {activeTab === "dashboard" && <Dashboard />}
+        
         {activeTab === "data" && (
           <>
             <StatsGrid refreshTrigger={refreshTrigger} />
 
             {loading ? (
               <div className="zzc-content">
-                <p className="zzc-muted">Loading {findLabel(currentKey)}…</p>
+                <p className="zzc-muted">Loading{findLabel(currentKey)}…</p>
               </div>
             ) : (
               <DataTable
