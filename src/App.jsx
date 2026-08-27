@@ -16,6 +16,7 @@ import StatsGrid from "./components/StatsGrid.jsx";
 import DataTable from "./components/DataTable.jsx";
 import RecordModal from "./components/RecordModal.jsx";
 import Dashboard from "./components/Dashboard.jsx";
+import BulkTools from "./components/BulkTools.jsx";
 
 const PAGE_SIZE = 10;
 
@@ -194,6 +195,8 @@ export default function App() {
 
         {activeTab === "dashboard" && <Dashboard />}
         
+        {activeTab === "bulk" && <BulkTools />}
+
         {activeTab === "data" && (
           <>
             <StatsGrid refreshTrigger={refreshTrigger} />
