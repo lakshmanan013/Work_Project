@@ -809,30 +809,13 @@ a {
   gap: .5rem;
 }
 
-
-/* =========================
-   TABLE SCROLLBAR
-========================= */
-
- /* .zzc-table-card::-webkit-scrollbar {
-  width: 8px;
-
-  height: 8px;
-}
-
-.zzc-table-card::-webkit-scrollbar-thumb {
-  background-color: #808080;
-
-  border-radius: 999px;
-}  */
-
-
 .bulk-tools-page {
   width: 100%;
-  padding: 16px;
+  box-sizing: border-box;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 15px;
 }
 
 /* Working set */
@@ -841,7 +824,7 @@ a {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .bulk-working-label {
@@ -850,18 +833,19 @@ a {
 }
 
 .bulk-tab {
-  height: 36px;
-  padding: 0 12px;
+  height: 35px;
+  padding: 0 13px;
   border: 1px solid #d9e3e3;
-  border-radius: 6px;
-  background: #fff;
+  border-radius: 8px;
+  background: #F9F5EB;
   color: #243636;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
+  gap: 1px;
 }
 
 .bulk-tab:hover {
-  background: #f1f5f5;
+  background: var(--accent);
 }
 
 .bulk-tab.active {
@@ -874,6 +858,7 @@ a {
 
 .bulk-card {
   width: 100%;
+  box-sizing: border-box;
   padding: 16px;
   border: 1px solid #dce5e5;
   border-radius: 12px;
@@ -882,13 +867,13 @@ a {
 
 .bulk-card h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .bulk-card p {
   margin: 6px 0 12px;
-  font-size: 12px;
+  font-size: 13px;
   color: #687777;
 }
 
@@ -897,7 +882,7 @@ a {
 .bulk-filter-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 
 /* Operations */
@@ -905,19 +890,21 @@ a {
 .bulk-operation-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 15px;
 }
 
 /* Inputs */
 
 .bulk-tools-page input,
 .bulk-tools-page select {
-  height: 36px;
+  height: 40px;
   width: 100%;
-  padding: 0 12px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border: 1px solid #d9e3e3;
-  border-radius: 6px;
-  background: #fff;
+  border-radius: 8px;
+  background: #F9F5EB;
+  color: #243636;
   font-size: 14px;
   outline: none;
 }
@@ -932,7 +919,7 @@ a {
 
 .bulk-input-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .bulk-input-row > * {
@@ -942,30 +929,31 @@ a {
 /* Primary button */
 
 .bulk-primary-btn {
-  height: 36px;
-  padding: 0 12px;
+  height: 35px;
+  padding: 5px 12px;
   margin-top: 12px;
   border: none;
-  border-radius: 6px;
-  background: #167c78;
+  border-radius: 8px;
+  background: #00897f;
   color: #fff;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .bulk-primary-btn:hover {
-  background: #126c69;
+  background: #a3afaf;
 }
 
 /* Secondary */
 
 .bulk-secondary-btn {
-  height: 36px;
-  padding: 0 12px;
+  height: 35px;
+  padding: 0 14px;
   border: 1px solid #d9e3e3;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
+  color: #243636;
   font-size: 14px;
   cursor: pointer;
 }
@@ -981,7 +969,7 @@ a {
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .bulk-checkbox input {
@@ -999,7 +987,8 @@ a {
 
 .bulk-button-row {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -1007,23 +996,24 @@ a {
 
 .bulk-tools-page textarea {
   width: 100%;
-  height: 160px;
+  height: 180px;
+  box-sizing: border-box;
   padding: 12px;
   resize: vertical;
   border: 1px solid #d9e3e3;
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: monospace;
   font-size: 12px;
   outline: none;
+  background: #F9F5EB;
 }
 
-/* File */
-
+  /* File Row Container */
 .bulk-file-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .bulk-file-row input {
@@ -1059,15 +1049,60 @@ a {
 
 @media (max-width: 600px) {
   .bulk-tools-page {
-    padding: 12px;
+    padding: 10px;
   }
 
   .bulk-input-row {
     flex-direction: column;
-  }
+  } 
 
   .bulk-file-row {
     flex-direction: column;
     align-items: flex-start;
   }
+
+/* Base styling for the native file input element */
+.bulk-file-row input[type="file"] {
+  height: 40px;
+  width: auto;
+  box-sizing: border-box;
+  padding: 0 14px 0 0; /* Keeps a clean right-side buffer for filename text */
+  border: 1px solid #d9e3e3;
+  border-radius: 8px; /* Curve matching everything else */
+  background: #F9F5EB; /* Sandal tint background color */
+  color: #243636;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Beautiful custom curve and style for the "Choose File" sub-button */
+.bulk-file-row input[type="file"]::-webkit-file-upload-button {
+  height: 100%;
+  padding: 0 14px;
+  margin-right: 12px;
+  border: none;
+  border-right: 1px solid #d9e3e3; /* Separation line */
+  border-radius: 7px 0 0 7px; /* Inner radius matching parent container */
+  background: #EAE3D2; /* Accent sandal color for structure */
+  color: #243636;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* Interaction feedback for the inner button component */
+.bulk-file-row input[type="file"]::-webkit-file-upload-button:hover {
+  background: #DFD7C2;
+}
+
+/* Button position correction within container */
+.bulk-file-row .bulk-primary-btn {
+  margin-top: 0;
+  flex-shrink: 0; /* Prevents the import button from squishing */
+}
+
 }

@@ -129,24 +129,30 @@ export default function BulkTools() {
   }
 
   function applyStockChange() {
-    runBusy(async () => {
-      const rows = await getFilteredProducts();
-      const delta = Number(stockValue) || 0;
-      let changed = 0;
-      for (const p of rows) {
-        const current = Number(p.stock_quantity) || 0;
-        let next;
-        if (stockOp === "add") next = current + delta;
-        else if (stockOp === "subtract") next = Math.max(0, current - delta);
-        else next = delta;
-        if (next !== current) {
-          await updateRecord("products", p.id, { stock_quantity: next });
-          changed++;
-        }
+  runBusy(async () => {
+    const rows = await getFilteredWorkingSet(); // Dynamically checks products OR inventory
+    const delta = Number(stockValue) || 0;
+    let changed = 0;
+
+    // Dynamically choose between 'stock_quantity' (products) or 'available_quantity' (inventory)
+    const targetField = workingSet === "inventory" ? "available_quantity" : "stock_quantity";
+
+    for (const p of rows) {
+      const current = Number(p[targetField]) || 0;
+      let next;
+      if (stockOp === "add") next = current + delta;
+      else if (stockOp === "subtract") next = Math.max(0, current - delta);
+      else next = delta;
+
+      if (next !== current) {
+        // Sends partial payload update seamlessly via your live API connector
+        await updateRecord(workingSet, p.id, { [targetField]: next });
+        changed++;
       }
-      addLog(`Stock update: {"matched":${rows.length},"changed":${changed}}`);
-    });
-  }
+    }
+    addLog(`Stock update: {"matched":${rows.length},"changed":${changed}}`);
+  });
+}
 
   function applyPriceChange() {
     runBusy(async () => {
