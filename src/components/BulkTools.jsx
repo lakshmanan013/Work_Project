@@ -59,6 +59,14 @@ function parseImportText(text) {
   return parseCSV(trimmed);
 }
 
+function isValidNumber(v) {
+  return v !== "" && v !== null && v !== undefined && !Number.isNaN(Number(v));
+}
+
+function workingSetHasIsActive(key) {
+  return TABLE_CONFIG[key]?.fields.some((f) => f.key === "is_active") ?? false;
+}
+
 export default function BulkTools() {
   const [workingSet, setWorkingSet] = useState("products");
   const [filterPincode, setFilterPincode] = useState("");
@@ -82,6 +90,12 @@ export default function BulkTools() {
     setActivityLog((prev) => [{ time: nowTime(), message }, ...prev].slice(0, 50));
   }
 
+  const stockValueValid = isValidNumber(stockValue);
+  const priceValueValid = isValidNumber(priceValue);
+  const stockApplicable = workingSet === "products" || workingSet === "inventory";
+  const priceApplicable = workingSet === "products";
+  const showActivateDeactivate = workingSetHasIsActive(workingSet);
+
   // Products don't carry a seller_id or category_id in this schema — a
   // seller-id filter on products is derived through Inventory (which does
   // link product_id + seller_id). Category id has no matching field on
@@ -100,21 +114,30 @@ export default function BulkTools() {
     return rows;
   }
 
-  async function getFilteredWorkingSet() {
-    let rows = await fetchList(workingSet);
+   // Generalized filtered fetch for whichever table is passed in — used by
+  // Assign pin code, Activate/Deactivate, Export CSV, and CSV/JSON import,
+  // all of which operate on the currently selected working set (not just
+  // products). Products and Inventory both support the seller-id filter;
+  // Doctors has no seller relationship, so that filter is a no-op for it.
+  async function getFilteredWorkingSet(tableKey){
+    let rows = await fetchList(tableKey);
     if (filterPincode.trim()) {
       rows = rows.filter((r) => String(r.pincode || "") === filterPincode.trim());
     }
     if (filterSellerId.trim()) {
-      if (workingSet === "inventory") {
+      if (tableKey === "inventory") {
         rows = rows.filter((r) => String(r.seller_id) === filterSellerId.trim());
-      } else if (workingSet === "products") {
+      } else if (tableKey === "products") {
         const inv = await fetchList("inventory");
         const ids = new Set(inv.filter((i) => String(i.seller_id) === filterSellerId.trim()).map((i) => i.product_id));
         rows = rows.filter((r) => ids.has(r.id));
       }
     }
     return rows;
+  }
+
+  async function getFilteredWorkingSet(){
+    return getFilteredTable(workingSet);
   }
 
   async function runBusy(fn) {
@@ -128,33 +151,46 @@ export default function BulkTools() {
     }
   }
 
-  function applyStockChange() {
-  runBusy(async () => {
-    const rows = await getFilteredWorkingSet(); // Dynamically checks products OR inventory
-    const delta = Number(stockValue) || 0;
-    let changed = 0;
+ function applyStockChange() {
+    if (!stockApplicable || !stockValueValid) return;
+    runBusy(async () => {
+      const delta = Number(stockValue);
+      let changed = 0;
 
-    // Dynamically choose between 'stock_quantity' (products) or 'available_quantity' (inventory)
-    const targetField = workingSet === "inventory" ? "available_quantity" : "stock_quantity";
-
-    for (const p of rows) {
-      const current = Number(p[targetField]) || 0;
-      let next;
-      if (stockOp === "add") next = current + delta;
-      else if (stockOp === "subtract") next = Math.max(0, current - delta);
-      else next = delta;
-
-      if (next !== current) {
-        // Sends partial payload update seamlessly via your live API connector
-        await updateRecord(workingSet, p.id, { [targetField]: next });
-        changed++;
+      if (workingSet === "inventory") {
+        const rows = await getFilteredTable("inventory");
+        for (const row of rows) {
+          const current = Number(row.available_quantity) || 0;
+          let next;
+          if (stockOp === "add") next = current + delta;
+          else if (stockOp === "subtract") next = Math.max(0, current - delta);
+          else next = delta;
+          if (next !== current) {
+            await updateRecord("inventory", row.id, { available_quantity: next });
+            changed++;
+          }
+        }
+        addLog(`Stock update (inventory): {"matched":${rows.length},"changed":${changed}}`);
+      } else {
+        const rows = await getFilteredProducts();
+        for (const p of rows) {
+          const current = Number(p.stock_quantity) || 0;
+          let next;
+          if (stockOp === "add") next = current + delta;
+          else if (stockOp === "subtract") next = Math.max(0, current - delta);
+          else next = delta;
+          if (next !== current) {
+            await updateRecord("products", p.id, { stock_quantity: next });
+            changed++;
+          }
+        }
+        addLog(`Stock update (products): {"matched":${rows.length},"changed":${changed}}`);
       }
-    }
-    addLog(`Stock update: {"matched":${rows.length},"changed":${changed}}`);
-  });
-}
+    });
+  }
 
   function applyPriceChange() {
+    if(!priceApplicable || !priceValueValid) return;
     runBusy(async () => {
       const rows = await getFilteredProducts();
       const value = Number(priceValue) || 0;
@@ -181,24 +217,25 @@ export default function BulkTools() {
     });
   }
 
-  function applyAssignPincode() {
+function applyAssignPincode() {
     if (!assignPincodeValue.trim()) return;
     runBusy(async () => {
-      const rows = await getFilteredProducts();
-      for (const p of rows) {
-        await updateRecord("products", p.id, { pincode: assignPincodeValue.trim() });
+      const rows = await getFilteredWorkingSet();
+      for (const row of rows) {
+        await updateRecord(workingSet, row.id, { pincode: assignPincodeValue.trim() });
       }
-      addLog(`Assigned pin code ${assignPincodeValue.trim()} to ${rows.length} products`);
+      addLog(`Assigned pin code ${assignPincodeValue.trim()} to ${rows.length} ${workingSet} rows`);
     });
   }
 
   function setActiveForFiltered(activate) {
+    if (!showActivateDeactivate) return;
     runBusy(async () => {
-      const rows = await getFilteredProducts();
-      for (const p of rows) {
-        await updateRecord("products", p.id, { is_active: activate ? "Yes" : "No" });
+      const rows = await getFilteredWorkingSet();
+      for (const row of rows) {
+        await updateRecord(workingSet, row.id, { is_active: activate ? "Yes" : "No" });
       }
-      addLog(`${activate ? "Activated" : "Deactivated"} ${rows.length} products`);
+      addLog(`${activate ? "Activated" : "Deactivated"} ${rows.length} ${workingSet} rows`);
     });
   }
 
@@ -221,7 +258,7 @@ export default function BulkTools() {
 
   function runImport() {
     runBusy(async () => {
-      const config = TABLE_CONFIG.products;
+      const config = TABLE_CONFIG[workingSet];
       let rows;
       try {
         rows = parseImportText(importText);
@@ -243,17 +280,17 @@ export default function BulkTools() {
             payload[field.key] = coerceFieldValue(field, row[field.key]);
           });
           if (row.id !== undefined && row.id !== "") {
-            await updateRecord("products", row.id, payload);
+            await updateRecord(workingSet, row.id, payload);
             updated++;
           } else {
-            await createRecord("products", payload);
+            await createRecord(workingSet, payload);
             created++;
           }
         } catch {
           failed++;
         }
       }
-      addLog(`Import: {"created":${created},"updated":${updated},"failed":${failed}}`);
+      addLog(`Import into ${workingSet}: {"created":${created},"updated":${updated},"failed":${failed}}`);
     });
   }
 
@@ -290,10 +327,16 @@ export default function BulkTools() {
           </div>
         </div>
 
-        <div className="bulk-operation-grid">
+         <div className="bulk-operation-grid">
           <div className="bulk-card">
             <h3>Mass stock update</h3>
-            <p>Updates products.stock_quantity.</p>
+            <p>
+              {workingSet === "inventory"
+                ? "Updates inventory.available_quantity."
+                : workingSet === "products"
+                ? "Updates products.stock_quantity."
+                : "Doctors don't have a stock field — switch to Medicines & Products or Inventory to use this."}
+            </p>
             <div className="bulk-input-row">
               <select value={stockOp} onChange={(e) => setStockOp(e.target.value)}>
                 <option value="add">Add units</option>
@@ -302,14 +345,17 @@ export default function BulkTools() {
               </select>
               <input type="number" value={stockValue} onChange={(e) => setStockValue(e.target.value)} />
             </div>
-            <button className="bulk-primary-btn" onClick={applyStockChange} disabled={busy}>
+            <button className="bulk-primary-btn" onClick={applyStockChange} disabled={busy || !stockApplicable || !stockValueValid}>
               Apply stock change
             </button>
           </div>
 
           <div className="bulk-card">
             <h3>Mass price update</h3>
-            <p>Applies to medicines, pet food and accessories.</p>
+            <p>
+              Applies to medicines, pet food and accessories.
+              {!priceApplicable && " (switch to Medicines & Products to use this)"}
+            </p>
             <div className="bulk-input-row">
               <select value={priceOp} onChange={(e) => setPriceOp(e.target.value)}>
                 <option value="rupee">Change by ₹</option>
@@ -322,7 +368,7 @@ export default function BulkTools() {
               <input type="checkbox" checked={recalcDiscount} onChange={(e) => setRecalcDiscount(e.target.checked)} />
               Recalculate discount % against MRP
             </label>
-            <button className="bulk-primary-btn" onClick={applyPriceChange} disabled={busy}>
+            <button className="bulk-primary-btn" onClick={applyPriceChange} disabled={busy || !priceApplicable || !priceValueValid}>
               Apply price change
             </button>
           </div>
@@ -331,7 +377,7 @@ export default function BulkTools() {
         <div className="bulk-operation-grid">
           <div className="bulk-card">
             <h3>Assign pin code in bulk</h3>
-            <p>Tag the filtered products rows to a serviceable pin code.</p>
+            <p>Tag the filtered {workingSet} rows to a serviceable pin code.</p>
             <input
               className="bulk-full-input"
               placeholder="e.g. 560076"
@@ -342,16 +388,20 @@ export default function BulkTools() {
               <button className="bulk-primary-btn" onClick={applyAssignPincode} disabled={busy || !assignPincodeValue.trim()}>
                 Assign pin code
               </button>
-              <button className="bulk-secondary-btn" onClick={() => setActiveForFiltered(true)} disabled={busy}>
-                Activate
-              </button>
-              <button className="bulk-secondary-btn" onClick={() => setActiveForFiltered(false)} disabled={busy}>
-                Deactivate
-              </button>
+              {showActivateDeactivate && (
+                <>
+                  <button className="bulk-secondary-btn" onClick={() => setActiveForFiltered(true)} disabled={busy}>
+                    Activate
+                  </button>
+                  <button className="bulk-secondary-btn" onClick={() => setActiveForFiltered(false)} disabled={busy}>
+                    Deactivate
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="bulk-card">
+           <div className="bulk-card">
             <h3>CSV / JSON import</h3>
             <p>
               First row = column names. Include an id column to update existing rows, omit it to create new ones.
@@ -366,7 +416,7 @@ export default function BulkTools() {
             <div className="bulk-file-row">
               <input type="file" accept=".csv,.json,text/csv,application/json" onChange={handleFileChoose} />
               <button className="bulk-primary-btn" onClick={runImport} disabled={busy || !importText.trim()}>
-                Import into products
+                Import into {workingSet}
               </button>
             </div>
           </div>

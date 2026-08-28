@@ -17,10 +17,12 @@ import DataTable from "./components/DataTable.jsx";
 import RecordModal from "./components/RecordModal.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import BulkTools from "./components/BulkTools.jsx";
+import SalesCRM from "./components/SalesCRM.jsx";
 
 const PAGE_SIZE = 10;
 
 export default function App() {
+  const [showSalesCRM, setShowSalesCRM] = useState(false);
   const [currentKey, setCurrentKey] = useState("pet_parents");
   const [records, setRecords] = useState([]); // raw objects from the API, in list order
   const [loading, setLoading] = useState(true);
@@ -154,6 +156,9 @@ export default function App() {
 
   const columnLabels = columns.map((f) => f.label || f.key);
 
+  if(showSalesCRM) {
+    return <SalesCRM onExit={() => setShowSalesCRM(false)} />;
+  }
 
   return (
     <div className="zzc-app">
@@ -174,6 +179,7 @@ export default function App() {
           onNewRecord={openNewModal}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          onOpenSalesCRM={() => setShowSalesCRM(true)}
         />
 
         {error && (
