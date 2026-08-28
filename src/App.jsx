@@ -22,12 +22,10 @@ import SalesCRM from "./components/SalesCRM.jsx";
 const PAGE_SIZE = 10;
 
 export default function App() {
-  const [showSalesCRM, setShowSalesCRM] = useState(false);
   const [currentKey, setCurrentKey] = useState("pet_parents");
   const [records, setRecords] = useState([]); // raw objects from the API, in list order
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "data"
@@ -35,6 +33,7 @@ export default function App() {
   const [editingRecord, setEditingRecord] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [saving, setSaving] = useState(false);
+  const [showSalesCRM, setShowSalesCRM] = useState(false);
 
   const tableConfig = TABLE_CONFIG[currentKey];
   const columns = tableConfig.fields;

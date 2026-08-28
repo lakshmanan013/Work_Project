@@ -9,6 +9,7 @@ export default function TopBar({
   onNewRecord,
   activeTab,
   onTabChange,
+  onOpenSalesCRM
 }) {
   return (
     <header className="zzc-topbar">
@@ -40,7 +41,13 @@ export default function TopBar({
             {tab === "bulk" ? "Bulk tools" : tab}
           </button>
         ))}
-        <a href="#" className="zzc-btn-link">Sales CRM</a>
+        <button
+  type="button"
+  className="zzc-btn-link"
+  onClick={onOpenSalesCRM}
+>
+  Sales CRM
+</button>
         <a href="#" className="zzc-btn-link">Console</a>
       </div>
     </header>

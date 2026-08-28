@@ -1,27 +1,50 @@
 .sales-crm-page {
-  padding: 20px 28px 40px;
-  max-width: 1400px;
-  margin: 0 auto;
+  min-height: 100vh;
+  padding: 0;
+  width: 100%;
+  margin: 0;
+  background: #fafaf2;
+  box-sizing: border-box;
 }
-
 .sales-crm-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 16px;
+
+  padding: 14px 22px;
+  border-bottom: 1px solid #dce7e5;
+  margin-bottom: 0;
+
+  background: #fff;
+  box-sizing: border-box;
 }
 .sales-crm-brand { display: flex; align-items: center; gap: 12px; }
+
 .sales-crm-logo {
-  width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0f9d8f, #f0a63e);
+  width: 40px;
+
+  border-radius: calc(var(--radius) - 2px);
+
+
+  color: var(--primary-foreground);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   flex-shrink: 0;
+  overflow: hidden;
 }
+
+.sales-crm-logo img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: contain; 
+}
+
 .sales-crm-header h1 { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
 
 .sales-crm-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -38,39 +61,61 @@
 
 .sales-crm-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+
+  padding: 14px;
+  margin-bottom: 0;
+
+  background: #f7f7ed;
+  border-bottom: 1px solid #dce7e5;
+  box-sizing: border-box;
 }
 @media (min-width: 720px) { .sales-crm-stats { grid-template-columns: repeat(5, 1fr); } }
 
 .sales-stat-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #d4e3e1;
+  border-radius: 16px;
   background: #fff;
-  padding: 14px 16px;
+  padding: 14px;
+  min-height: 74px;
+  box-sizing: border-box;
 }
 .sales-stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: #6b7280; }
 .sales-stat-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
 
-.sales-crm-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
-.sales-crm-tab {
-  border: 1px solid #e5e7eb;
+.sales-crm-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 23px;
+  margin-bottom: 0;
+
   background: #fff;
-  color: #374151;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 14px;
+  border-bottom: 1px solid #dce7e5;
+}
+
+.sales-crm-tab {
+  border: none;
+  background: transparent;
+  color: #062a35;
+  border-radius: 15px;
+  padding: 10px 15px;
+  font-size: 15px;
   cursor: pointer;
 }
 .sales-crm-tab.active { background: #0f9d8f; border-color: #0f9d8f; color: #fff; font-weight: 600; }
 
 .sales-crm-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid #d4e3e1;
+  border-radius: 20px;
   background: #fff;
-  padding: 18px 20px;
-  margin-bottom: 16px;
+
+  padding: 19px;
+  margin: 18px 19px;
+
+  box-sizing: border-box;
 }
 .sales-crm-card h3 { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
 
@@ -92,16 +137,7 @@
 }
 
 .sales-task-list { display: flex; flex-direction: column; }
-.sales-task-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 0;
-  border-top: 1px solid #f0f0f0;
-  flex-wrap: wrap;
-}
-.sales-task-row:first-child { border-top: none; }
+
 .sales-task-title { font-weight: 600; margin: 0 0 2px; }
 
 .sales-task-status-pills { display: flex; gap: 6px; }
@@ -115,3 +151,24 @@
   cursor: pointer;
 }
 .sales-status-pill.active { background: #0f9d8f; border-color: #0f9d8f; color: #fff; font-weight: 600; }
+
+.sales-task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 14px;
+  margin-bottom: 9px;
+
+  border: 1px solid #d4e3e1;
+  border-radius: 17px;
+
+  background: #fff;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+.sales-task-row:first-child {
+  border-top: 1px solid #d4e3e1;
+}

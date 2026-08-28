@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { fetchList, createRecord, updateRecord } from "../api.js";
+import logo from "../assets/zenve-zippy-logo.png";
 import "./SalesCRM.css";
 
 function formatINR(n) {
@@ -139,7 +140,7 @@ export default function SalesCRM({ onExit }) {
     <div className="sales-crm-page">
       <header className="sales-crm-header">
         <div className="sales-crm-brand">
-          <div className="sales-crm-logo" />
+          <div className="sales-crm-logo"><img src={logo} /></div>
           <div>
             <h1>{selectedExec ? `${selectedExec.name} · Sales Executive CRM` : "Sales Executive CRM"}</h1>
             <p className="zzc-muted zzc-small">
