@@ -156,7 +156,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 1px;
 
   padding: 14px;
   margin-bottom: 9px;
@@ -172,3 +172,14 @@
 .sales-task-row:first-child {
   border-top: 1px solid #d4e3e1;
 }
+
+.sales-coverage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media (min-width: 800px) { .sales-coverage-grid { grid-template-columns: 1fr 1fr; } }
+.sales-coverage-grid .sales-crm-card { margin-bottom: 0; }
+
+.sales-pincode-pills { display: flex; flex-wrap: wrap; gap: 8px; }

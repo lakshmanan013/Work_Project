@@ -9,7 +9,7 @@ function formatINR(n) {
 
 const STATUSES = [
   { value: "open", label: "open" },
-  { value: "in_progress", label: "in progress" },
+  { value: "in progress", label: "in progress" },
   { value: "done", label: "done" },
 ];
 
@@ -84,10 +84,11 @@ export default function SalesCRM({ onExit }) {
     [alerts, coveredPincodes]
   );
 
+  const areaDoctors = useMemo(() => doctors.filter((d) => coveredPincodes.has(d.pincode)),[doctors, coveredPincodes]);
+  const areaProducts = useMemo(() => products.filter((p) => coveredPincodes.has(p.pincode)), [products, coveredPincodes]);
   const openTasksCount = myTasks.filter((t) => t.status !== "done").length;
   const unreadAlertsCount = myAlerts.filter((a) => !a.is_read).length;
-  const doctorsInArea = doctors.filter((d) => coveredPincodes.has(d.pincode)).length;
-  const areaProducts = products.filter((p) => coveredPincodes.has(p.pincode));
+  const doctorsInArea = areaDoctors.length;
   const skusInArea = areaProducts.length;
   const lowStockRows = inventory.filter(
     (i) => coveredPincodes.has(i.pincode) && (Number(i.available_quantity) || 0) <= (Number(i.reorder_level) || 0)
@@ -117,10 +118,41 @@ export default function SalesCRM({ onExit }) {
   }
 
   function setTaskStatus(task, status) {
-    updateRecord("executive_tasks", task.id, { status })
-      .then((updated) => setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t))))
-      .catch((err) => setError(err.message));
-  }
+  console.log("Updating task:", task);
+  console.log("New status:", status);
+
+  // Spread all existing task fields and override just the status
+  const updatedPayload = {
+    ...task,
+    status: status
+  };
+
+  updateRecord("executive_tasks", task.id, updatedPayload)
+    .then((updated) => {
+      console.log("Update successful:", updated);
+
+      setTasks((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t))
+      );
+    })
+    .catch((err) => {
+      console.error("STATUS UPDATE ERROR:", err);
+      console.error("Error message:", err?.message);
+
+      setError(
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        JSON.stringify(err)
+      );
+    });
+}
+
+  // function setTaskStatus(task, status) {
+  //   updateRecord("executive_tasks", task.id, { status })
+  //     .then((updated) => setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t))))
+  //     .catch((err) => setError(err.message));
+  // }
 
   function markAlertRead(alert) {
     updateRecord("executive_alerts", alert.id, { is_read: true })
@@ -279,7 +311,7 @@ export default function SalesCRM({ onExit }) {
           <h3>My alerts</h3>
           <div className="sales-task-list">
             {myAlerts.length === 0 ? (
-              <p className="zzc-muted zzc-small">No alerts yet.</p>
+              <p className="zzc-muted zzc-small">Nothing yet — hit “Scan my area”.</p>
             ) : (
               myAlerts.map((a) => (
                 <div className="sales-task-row" key={a.id}>
@@ -304,33 +336,77 @@ export default function SalesCRM({ onExit }) {
       )}
 
       {subTab === "coverage" && (
-        <div className="sales-crm-card">
-          <h3>Pin codes covered</h3>
-          <table className="zzc-table">
-            <thead>
-              <tr>
-                <th>Pin code</th>
-                <th>City</th>
-                <th>State</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myCoverage.length === 0 ? (
-                <tr className="zzc-empty-row">
-                  <td colSpan={3}>No pin codes assigned yet</td>
+        <>
+          <div className="sales-coverage-grid">
+            <div className="sales-crm-card">
+              <h3>My pin codes</h3>
+              <div className="sales-pincode-pills">
+                {myCoverage.length === 0 ? (
+                  <p className="zzc-muted zzc-small">No pin codes assigned yet.</p>
+                ) : (
+                  myCoverage.map((c) => (
+                    <span className="sales-status-pill" key={c.id}>
+                      {c.pincode}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="sales-crm-card">
+              <h3>Doctors in my area</h3>
+              <div className="sales-task-list">
+                {areaDoctors.length === 0 ? (
+                  <p className="zzc-muted zzc-small">No doctors in your covered pin codes yet.</p>
+                ) : (
+                  areaDoctors.map((d) => (
+                    <div className="sales-task-row" key={d.id}>
+                      <div>
+                        <p className="sales-task-title">{d.name}</p>
+                        <p className="zzc-muted zzc-small">
+                          {d.specializations || "—"} · pin {d.pincode}
+                        </p>
+                      </div>
+                      <span className="zzc-muted zzc-small">★ {d.rating ?? "—"}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="sales-crm-card">
+            <h3>Medicines, pet food &amp; accessories in my area</h3>
+            <table className="zzc-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Pin</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Rx</th>
                 </tr>
-              ) : (
-                myCoverage.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.pincode}</td>
-                    <td>{c.city}</td>
-                    <td>{c.state}</td>
+              </thead>
+              <tbody>
+                {areaProducts.length === 0 ? (
+                  <tr className="zzc-empty-row">
+                    <td colSpan={5}>No products in your covered pin codes yet</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  areaProducts.map((p) => (
+                    <tr key={p.id}>
+                      <td>{p.name}</td>
+                      <td>{p.pincode}</td>
+                      <td>{formatINR(p.price)}</td>
+                      <td>{p.stock_quantity}</td>
+                      <td>{p.is_prescription_required === true || p.is_prescription_required === "Yes" ? "Yes" : "No"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

@@ -500,15 +500,26 @@ export const TABLE_CONFIG = {
 async function handleResponse(res) {
   if (!res.ok) {
     let detail = res.statusText;
+
     try {
       const body = await res.json();
-      detail = body.detail || JSON.stringify(body);
+
+      if (typeof body.detail === "string") {
+        detail = body.detail;
+      } else if (body.detail) {
+        detail = JSON.stringify(body.detail);
+      } else {
+        detail = JSON.stringify(body);
+      }
     } catch (_) {
-      /* ignore parse errors */
+      // ignore parse errors
     }
+
     throw new Error(detail);
   }
+
   if (res.status === 204) return null;
+
   return res.json();
 }
 
