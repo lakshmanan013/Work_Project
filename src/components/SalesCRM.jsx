@@ -243,7 +243,7 @@ export default function SalesCRM({ onExit }) {
 
       {subTab === "tasks" && (
         <>
-          <div className="sales-crm-card">
+          {/* <div className="sales-crm-card">
             <h3>Add a field task</h3>
             <div className="sales-task-form">
               <input
@@ -270,7 +270,7 @@ export default function SalesCRM({ onExit }) {
                 Add task
               </button>
             </div>
-          </div>
+          </div> */}
 
           <div className="sales-crm-card">
             <h3>My tasks</h3>
