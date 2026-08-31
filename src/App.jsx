@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { findLabel } from "./data.js";
+import { findLabel, findGroupLabel } from "./data.js";
 import { SEARCH_CONFIG } from "./searchConfig.js";
 import {
   TABLE_CONFIG,
@@ -18,22 +18,25 @@ import RecordModal from "./components/RecordModal.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import BulkTools from "./components/BulkTools.jsx";
 import SalesCRM from "./components/SalesCRM.jsx";
+import SalesManagerCRM from "./components/SalesManagerCRM.jsx";
+import RegionalManagerCRM from "./components/RegionalManagerCRM.jsx";
 
 const PAGE_SIZE = 10;
 
 export default function App() {
+  const [salesCrmView, setSalesCrmView] = useState(null); // null | "executive" | "manager" | "regional"
   const [currentKey, setCurrentKey] = useState("pet_parents");
   const [records, setRecords] = useState([]); // raw objects from the API, in list order
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "data"
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [modalMode, setModalMode] = useState(null); // null | "new" | "edit"
   const [editingRecord, setEditingRecord] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [saving, setSaving] = useState(false);
-  const [showSalesCRM, setShowSalesCRM] = useState(false);
 
   const tableConfig = TABLE_CONFIG[currentKey];
   const columns = tableConfig.fields;
@@ -155,8 +158,14 @@ export default function App() {
 
   const columnLabels = columns.map((f) => f.label || f.key);
 
-  if(showSalesCRM) {
-    return <SalesCRM onExit={() => setShowSalesCRM(false)} />;
+  if (salesCrmView === "executive") {
+    return <SalesCRM onExit={() => setSalesCrmView(null)} />;
+  }
+  if (salesCrmView === "manager") {
+    return <SalesManagerCRM onExit={() => setSalesCrmView(null)} />;
+  }
+  if (salesCrmView === "regional") {
+    return <RegionalManagerCRM onExit={() => setSalesCrmView(null)} />;
   }
 
   return (
@@ -178,7 +187,7 @@ export default function App() {
           onNewRecord={openNewModal}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          onOpenSalesCRM={() => setShowSalesCRM(true)}
+          onOpenSalesCRM={(view) => setSalesCrmView(view)}
         />
 
         {error && (
@@ -199,16 +208,16 @@ export default function App() {
         )}
 
         {activeTab === "dashboard" && <Dashboard />}
-        
-        {activeTab === "bulk" && <BulkTools />}
 
+        {activeTab === "bulk" && <BulkTools />}
+        
         {activeTab === "data" && (
           <>
-            <StatsGrid refreshTrigger={refreshTrigger} />
+            {findGroupLabel(currentKey) !== "Sales team" && <StatsGrid refreshTrigger={refreshTrigger} />}
 
             {loading ? (
               <div className="zzc-content">
-                <p className="zzc-muted">Loading{findLabel(currentKey)}…</p>
+                <p className="zzc-muted">Loading {findLabel(currentKey)}…</p>
               </div>
             ) : (
               <DataTable

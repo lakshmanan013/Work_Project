@@ -183,3 +183,60 @@
 .sales-coverage-grid .sales-crm-card { margin-bottom: 0; }
 
 .sales-pincode-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Layout wrapper for the Sales CRM container */
+/* Container position handling */
+.zzc-sales-menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* Optional styling to tweak the small dropdown arrow icon */
+.zzc-caret {
+  font-size: 10px;
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+/* Floating context dropdown list panel styling */
+.zzc-sales-menu {
+  position: absolute;
+  top: 100%;                  /* Forces alignment directly underneath the link */
+  left: 0;                    /* Aligns it cleanly to the left bounds edge */
+  margin-top: 6px;            /* Clean vertical separation spacing */
+  
+  display: flex;
+  flex-direction: column;     /* Stacks the 3 options inside a column layout */
+  gap: 4px;
+  min-width: 170px;           /* Ensures regional manager text fits smoothly */
+  
+  background-color: #ffffff;  /* Solid panel card view color background */
+  border: 1px solid var(--foreground);  /* Clean perimeter border framing */
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Layer shadow elevation */
+  padding: 6px;
+  z-index: 999;               /* Keeps it cleanly visible over your table grids */
+}
+.zzc-sales-menu.hover{
+  background-color: oklch(98.5% .012 95);  /* Soft gray highlighted interaction choice view tint */
+}
+
+/* Action button stylings inside the nested panel */
+.zzc-sales-menu button {
+  background: none;
+  border: none;
+  text-align: left;           /* Clean left-alignment for lists typography */
+  padding: 8px 12px;          /* Tap interaction layout target box spacing */
+  width: 100%;
+  font-size: 14px;
+  color: #333333;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+/* Highlighted hover feedback item states */
+.zzc-sales-menu button:hover {
+  background-color: var(--accent);  /* Soft gray highlighted interaction choice view tint */
+  color: #000000;
+}

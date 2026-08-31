@@ -460,6 +460,35 @@ export const TABLE_CONFIG = {
       { key: "is_active", type: "yesno", default: "Yes" },
     ],
   },
+  // NOTE: the backend (pets.py) has no /regional-managers or /sales-managers
+  // routes yet — these are sidebar entries prepared ahead of that backend
+  // work, using the same shape as sales_executives (the closest existing
+  // table) as a placeholder schema. Until those endpoints exist, opening
+  // either section will show the usual "couldn't reach backend" banner.
+  // Once real routes are added, this config likely won't need to change at
+  // all (only the field list, if the real schema differs).
+  regional_managers: {
+    path: "/regional-managers",
+    fields: [
+      { key: "name", type: "text", required: true },
+      { key: "code", type: "text" },
+      { key: "phone", type: "text" },
+      { key: "email", type: "text" },
+      { key: "region", type: "text" },
+      { key: "is_active", type: "yesno", default: "Yes" },
+    ],
+  },
+  sales_managers: {
+    path: "/sales-managers",
+    fields: [
+      { key: "name", type: "text", required: true },
+      { key: "code", type: "text" },
+      { key: "phone", type: "text" },
+      { key: "email", type: "text" },
+      { key: "region", type: "text" },
+      { key: "is_active", type: "yesno", default: "Yes" },
+    ],
+  },
   pincode_coverage: {
     path: "/pincode-coverages",
     fields: [
@@ -500,26 +529,15 @@ export const TABLE_CONFIG = {
 async function handleResponse(res) {
   if (!res.ok) {
     let detail = res.statusText;
-
     try {
       const body = await res.json();
-
-      if (typeof body.detail === "string") {
-        detail = body.detail;
-      } else if (body.detail) {
-        detail = JSON.stringify(body.detail);
-      } else {
-        detail = JSON.stringify(body);
-      }
+      detail = body.detail || JSON.stringify(body);
     } catch (_) {
-      // ignore parse errors
+      /* ignore parse errors */
     }
-
     throw new Error(detail);
   }
-
   if (res.status === 204) return null;
-
   return res.json();
 }
 

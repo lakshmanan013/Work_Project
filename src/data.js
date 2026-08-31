@@ -52,10 +52,13 @@ export const NAV_GROUPS = [
     { key: "audit_logs", label: "Audit logs" },
   ]},
   { label: "Sales team", items: [
+    { key: "regional_managers", label: "Regional manager" },
+    { key: "sales_managers", label: "Sales manager" },
     { key: "sales_executives", label: "Sales executives" },
     { key: "pincode_coverage", label: "Pin code coverage" },
     { key: "executive_tasks", label: "Executive tasks" },
     { key: "executive_alerts", label: "Executive alerts" },
+
   ]},
 ];
 
@@ -82,4 +85,13 @@ export function findLabel(key) {
     }
   }
   return key;
+}
+
+export function findGroupLabel(key) {
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      if (item.key === key) return group.label;
+    }
+  }
+  return null;
 }
