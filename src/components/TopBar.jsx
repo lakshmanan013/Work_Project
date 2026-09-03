@@ -6,9 +6,12 @@ export default function TopBar({
   searchPlaceholder,
   showSearch,
   showNewRecord,
+  showImport,
+  importBusy,
   searchTerm,
   onSearchChange,
   onNewRecord,
+  onImportFile,
   activeTab,
   onTabChange,
   onOpenSalesCRM,
@@ -52,6 +55,26 @@ export default function TopBar({
           <button className="zzc-btn zzc-btn-primary" onClick={onNewRecord}>
             New record
           </button>
+        )}
+
+        {showImport && (
+          <label
+            className={"zzc-btn zzc-btn-outline" + (importBusy ? " disabled" : "")}
+            style={{ cursor: importBusy ? "not-allowed" : "pointer", marginBottom: 0 }}
+          >
+            {importBusy ? "Importing…" : "Import file"}
+            <input
+              type="file"
+              accept=".csv,.json,text/csv,application/json"
+              style={{ display: "none" }}
+              disabled={importBusy}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = ""; // allow re-selecting the same file next time
+                if (file) onImportFile(file);
+              }}
+            />
+          </label>
         )}
         
         {["dashboard", "data", "bulk"].map((tab) => (

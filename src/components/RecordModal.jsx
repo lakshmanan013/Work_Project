@@ -33,6 +33,21 @@ export default function RecordModal({ mode, columns, values, onChange, onSave, o
       );
     }
 
+      if (field.type === "select") {
+        return (
+          <select
+            id={id}
+            value={value ?? ""}
+            onChange={(e) => onChange(field.key, e.target.value)}
+          >
+            {(field.options || []).map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        );
+      }
     if (field.type === "number") {
       return (
         <input

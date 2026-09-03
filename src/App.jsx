@@ -1,15 +1,17 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { findLabel, findGroupLabel } from "./data.js";
+import { findLabel, findGroupLabel, SALES_TEAM_STATS } from "./data.js";
 import { SEARCH_CONFIG } from "./searchConfig.js";
 import {
   TABLE_CONFIG,
   fetchList,
+  fetchStatCounts,
   createRecord,
   updateRecord,
   deleteRecord,
   coerceFieldValue,
   displayFieldValue,
 } from "./api.js";
+import { parseImportText, readFileAsText, importRows } from "./importutils.js";
 import Sidebar from "./components/sidebar.jsx";
 import TopBar from "./components/TopBar.jsx";
 import StatsGrid from "./components/StatsGrid.jsx";
@@ -37,6 +39,14 @@ export default function App() {
   const [editingRecord, setEditingRecord] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [saving, setSaving] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importNotice, setImportNotice] = useState(null);
+
+  // Product import files (CSV or JSON) can be dropped straight onto the
+  // Medicines & Products page — no need to go through Bulk Tools first.
+  // Extend this set if other tables should get the same "Import file"
+  // button later.
+  const IMPORTABLE_TABLES = new Set(["products"]);
 
   const tableConfig = TABLE_CONFIG[currentKey];
   const columns = tableConfig.fields;
@@ -60,11 +70,12 @@ export default function App() {
     loadRecords();
   }, [loadRecords]);
 
-  const filtered = useMemo(() => {
+    const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term || !searchConfig) return records;
+    const searchColumns = searchConfig.columns || [searchConfig.column];
     return records.filter((record) =>
-      String(record[searchConfig.column] ?? "").toLowerCase().includes(term)
+      searchColumns.some((col) => String(record[col] ?? "").toLowerCase().includes(term))
     );
   }, [records, searchTerm, searchConfig]);
 
@@ -85,6 +96,39 @@ export default function App() {
     setSearchTerm("");
     setActiveTab("data");
     setError(null);
+    setImportNotice(null);
+  }
+
+  async function handleImportFile(file) {
+    setImportBusy(true);
+    setError(null);
+    setImportNotice(null);
+    try {
+      const text = await readFileAsText(file);
+      const rows = parseImportText(text);
+      if (rows.length === 0) {
+        setError("That file didn't have any rows to import.");
+        return;
+      }
+      const fields = columns.map((f) => ({ ...f, coerce: (v) => coerceFieldValue(f, v) }));
+      const { created, updated, failed } = await importRows(rows, fields, {
+        createFn: (payload) => createRecord(currentKey, payload),
+        updateFn: (id, payload) => updateRecord(currentKey, id, payload),
+      });
+      await loadRecords();
+      setRefreshTrigger((n) => n + 1);
+      const label = findLabel(currentKey).toLowerCase();
+      const summary = `Imported ${created} new and updated ${updated} ${label} record(s)${failed ? `; ${failed} row(s) failed` : ""}.`;
+      if (failed > 0 && created === 0 && updated === 0) {
+        setError(summary);
+      } else {
+        setImportNotice(summary);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to import file");
+    } finally {
+      setImportBusy(false);
+    }
   }
 
   function openNewModal() {
@@ -178,6 +222,8 @@ export default function App() {
           subtitle={`${filtered.length} records · table ${currentKey}`}
           showSearch={activeTab === "data" && Boolean(searchConfig)}
           showNewRecord={activeTab === "data"}
+          showImport={activeTab === "data" && IMPORTABLE_TABLES.has(currentKey)}
+          importBusy={importBusy}
           searchPlaceholder={searchConfig ? "Search " + searchConfig.placeholder : ""}
           searchTerm={searchTerm}
           onSearchChange={(value) => {
@@ -185,6 +231,7 @@ export default function App() {
             setCurrentPage(1);
           }}
           onNewRecord={openNewModal}
+          onImportFile={handleImportFile}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onOpenSalesCRM={(view) => setSalesCrmView(view)}
@@ -207,14 +254,34 @@ export default function App() {
           </div>
         )}
 
+        {importNotice && (
+          <div className="zzc-content" style={{ paddingTop: 0 }}>
+            <div
+              style={{
+                background: "#dcfce7",
+                color: "#166534",
+                padding: "10px 14px",
+                borderRadius: 8,
+                marginBottom: 12,
+                fontSize: 14,
+              }}
+            >
+              {importNotice}
+            </div>
+          </div>
+        )}
+
         {activeTab === "dashboard" && <Dashboard />}
 
         {activeTab === "bulk" && <BulkTools />}
         
         {activeTab === "data" && (
           <>
-            {findGroupLabel(currentKey) !== "Sales team" && <StatsGrid refreshTrigger={refreshTrigger} />}
-
+          {findGroupLabel(currentKey) === "Sales team" ? (
+  <SalesTeamStats refreshTrigger={refreshTrigger} />
+) : (
+  <StatsGrid refreshTrigger={refreshTrigger} />
+)}
             {loading ? (
               <div className="zzc-content">
                 <p className="zzc-muted">Loading {findLabel(currentKey)}…</p>
@@ -257,4 +324,58 @@ function formatCell(field, record) {
   if (value === null || value === undefined) return "";
   if (typeof value === "boolean") return value ? "true" : "false";
   return String(value);
+}
+
+function taskBucket(status) {
+  const s = String(status || "").toLowerCase();
+  if (s === "done" || s === "completed" || s === "closed") return "completed";
+  if (s === "active" || s === "in progress" || s === "in_progress" || s === "ongoing") return "active";
+  return "pending";
+}
+
+function SalesTeamStats({ refreshTrigger }) {
+  const [counts, setCounts] = useState({});
+  const [taskCounts, setTaskCounts] = useState({ pending: 0, active: 0, completed: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      fetchStatCounts(SALES_TEAM_STATS),
+      fetchList("executive_tasks").catch(() => []),
+    ]).then(([statResult, tasks]) => {
+      if (cancelled) return;
+      setCounts(statResult);
+      const buckets = { pending: 0, active: 0, completed: 0 };
+      (Array.isArray(tasks) ? tasks : []).forEach((t) => {
+        buckets[taskBucket(t.status)]++;
+      });
+      setTaskCounts(buckets);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
+
+  const tiles = [
+    ...SALES_TEAM_STATS.map((stat) => ({ label: stat.label, value: counts[stat.key] })),
+    { label: "tasks completed", value: taskCounts.completed },
+    { label: "tasks pending", value: taskCounts.pending },
+    { label: "tasks active", value: taskCounts.active },
+  ];
+
+  return (
+    <div className="zzc-stats-grid">
+      {tiles.map((tile) => (
+        <div className="zzc-stat-card" key={tile.label}>
+          <p className="zzc-stat-label">{tile.label}</p>
+          <p className="zzc-stat-value">
+            {loading ? "…" : tile.value === null || tile.value === undefined ? "—" : tile.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
 }

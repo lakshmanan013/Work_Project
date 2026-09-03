@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { fetchList, createRecord, updateRecord, TABLE_CONFIG, coerceFieldValue } from "../api.js";
 
+
 // The backend supports partial updates (it uses `exclude_unset=True`), so
 // every bulk action here sends only the field(s) actually being changed —
 // not a full record replace. Verified directly against pets.py's

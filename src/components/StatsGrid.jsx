@@ -3,14 +3,14 @@ import { fetchStatCounts } from "../api.js";
 import { STATS } from "../data.js";
 
 
-export default function StatsGrid({ refreshTrigger }) {
+export default function StatsGrid({ refreshTrigger, stats = STATS }) {
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchStatCounts(STATS).then((result) => {
+    fetchStatCounts(stats).then((result) => {
       if (!cancelled) {
         setCounts(result);
         setLoading(false);

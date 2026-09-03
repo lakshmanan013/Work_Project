@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { fetchList, createRecord } from "../api.js";
+import logo from "../assets/zenve-zippy-logo.png";
 import "./SalesCRM.css";
+
+function formatINR(n) {
+  return "₹" + Math.round(n || 0).toLocaleString("en-IN");
+}
 
 const ALL_REGIONS = "__all__";
 
@@ -11,8 +16,11 @@ export default function RegionalManagerCRM({ onExit }) {
   const [executives, setExecutives] = useState([]);
   const [coverage, setCoverage] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const [selectedRegion, setSelectedRegion] = useState(ALL_REGIONS);
+  const [subTab, setSubTab] = useState("team");
 
   const [taskTitle, setTaskTitle] = useState("");
   const [taskPincode, setTaskPincode] = useState("");
@@ -23,11 +31,13 @@ export default function RegionalManagerCRM({ onExit }) {
   const loadAll = useCallback(() => {
     setLoading(true);
     setError(null);
-    Promise.all([fetchList("sales_executives"), fetchList("pincode_coverage"), fetchList("executive_tasks")])
-      .then(([execs, cov, tsk]) => {
+    Promise.all([fetchList("sales_executives"), fetchList("pincode_coverage"), fetchList("executive_tasks"), fetchList("doctors"), fetchList("products")])
+      .then(([execs, cov, tsk, docs, prods]) => {
         setExecutives(execs);
         setCoverage(cov);
         setTasks(tsk);
+        setDoctors(docs);
+        setProducts(prods);
       })
       .catch((err) => setError(err.message || "Failed to load Regional Manager data"))
       .finally(() => setLoading(false));
@@ -68,6 +78,15 @@ export default function RegionalManagerCRM({ onExit }) {
     [coverage, execsInScope]
   );
 
+  const scopeDoctors = useMemo(
+    () => doctors.filter((d) => scopePincodes.includes(d.pincode)),
+    [doctors, scopePincodes]
+  );
+  const scopeProducts = useMemo(
+    () => products.filter((p) => scopePincodes.includes(p.pincode)),
+    [products, scopePincodes]
+  );
+
   function addTask() {
     if (!taskTitle.trim()) return;
     setBusy(true);
@@ -103,7 +122,7 @@ export default function RegionalManagerCRM({ onExit }) {
     <div className="sales-crm-page">
       <header className="sales-crm-header">
         <div className="sales-crm-brand">
-          <div className="sales-crm-logo" />
+          <div className="sales-crm-logo"><img src={logo} /></div>
           <div>
             <h1>Regional Manager · Team CRM</h1>
             <p className="zzc-muted zzc-small">Assign tasks across your region and track completion for the whole team.</p>
@@ -148,61 +167,151 @@ export default function RegionalManagerCRM({ onExit }) {
         </div>
       </div>
 
-      <div className="sales-crm-card">
-        <h3>Assign a task</h3>
-        <div className="sales-task-form">
-          <input
-            className="sales-task-title-input"
-            placeholder="Task title"
-            value={taskTitle}
-            onChange={(e) => setTaskTitle(e.target.value)}
-          />
-          <select value={taskPincode} onChange={(e) => setTaskPincode(e.target.value)}>
-            <option value="">Pin code</option>
-            {scopePincodes.map((pc) => (
-              <option key={pc} value={pc}>
-                {pc}
-              </option>
-            ))}
-          </select>
-          <select value={taskPriority} onChange={(e) => setTaskPriority(e.target.value)}>
-            <option value="low">low</option>
-            <option value="medium">medium</option>
-            <option value="high">high</option>
-          </select>
-          <input type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} />
-          <button className="zzc-btn zzc-btn-primary" onClick={addTask} disabled={busy || !taskTitle.trim()}>
-            Add task
+      <div className="sales-crm-tabs">
+        {["team", "coverage"].map((t) => (
+          <button key={t} className={"sales-crm-tab" + (subTab === t ? " active" : "")} onClick={() => setSubTab(t)}>
+            {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
-        </div>
-        <p className="zzc-muted zzc-small" style={{ marginTop: 10 }}>
-          Tasks are matched to whichever executive covers the chosen pin code — the schema has no Sales Manager records yet and
-          no direct assignee field on tasks, so this rolls up to Sales Executive level, region-wide, rather than by manager.
-        </p>
+        ))}
+        <button className="sales-crm-tab">Monthly Plan</button>
+        <button className="sales-crm-tab">Standard Plan</button>
+        <button className="sales-crm-tab">Daily Plan</button>
       </div>
 
-      <div className="sales-crm-card">
-        <h3>Completion by executive {selectedRegion !== ALL_REGIONS && `— ${selectedRegion}`}</h3>
-        <div className="sales-task-list">
-          {execStats.length === 0 ? (
-            <p className="zzc-muted zzc-small">No executives in scope yet.</p>
-          ) : (
-            execStats.map(({ exec, taskCount, done, pct }) => (
-              <div className="sales-task-row" key={exec.id}>
-                <div>
-                  <p className="sales-task-title">
-                    {exec.name} <span className="zzc-muted zzc-small">· {exec.region || "—"}</span>
-                  </p>
-                  <p className="zzc-muted zzc-small">
-                    {taskCount} task{taskCount === 1 ? "" : "s"} assigned · {done} completed
-                  </p>
-                </div>
-                <span className="sales-status-pill active">{pct === null ? "no tasks yet" : `${pct}% complete`}</span>
+      {subTab === "team" && (
+        <>
+          <div className="sales-crm-card">
+            <h3>Assign a task</h3>
+            <div className="sales-task-form">
+              <input
+                className="sales-task-title-input"
+                placeholder="Task title"
+                value={taskTitle}
+                onChange={(e) => setTaskTitle(e.target.value)}
+              />
+              <select value={taskPincode} onChange={(e) => setTaskPincode(e.target.value)}>
+                <option value="">Pin code</option>
+                {scopePincodes.map((pc) => (
+                  <option key={pc} value={pc}>
+                    {pc}
+                  </option>
+                ))}
+              </select>
+              <select value={taskPriority} onChange={(e) => setTaskPriority(e.target.value)}>
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+              </select>
+              <input type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} />
+              <button className="zzc-btn zzc-btn-primary" onClick={addTask} disabled={busy || !taskTitle.trim()}>
+                Add task
+              </button>
+            </div>
+            <p className="zzc-muted zzc-small" style={{ marginTop: 10 }}>
+              Tasks are matched to whichever executive covers the chosen pin code — the schema has no Sales Manager records yet
+              and no direct assignee field on tasks, so this rolls up to Sales Executive level, region-wide, rather than by
+              manager.
+            </p>
+          </div>
+
+          <div className="sales-crm-card">
+            <h3>Completion by executive {selectedRegion !== ALL_REGIONS && `— ${selectedRegion}`}</h3>
+            <div className="sales-task-list">
+              {execStats.length === 0 ? (
+                <p className="zzc-muted zzc-small">No executives in scope yet.</p>
+              ) : (
+                execStats.map(({ exec, taskCount, done, pct }) => (
+                  <div className="sales-task-row" key={exec.id}>
+                    <div>
+                      <p className="sales-task-title">
+                        {exec.name} <span className="zzc-muted zzc-small">· {exec.region || "—"}</span>
+                      </p>
+                      <p className="zzc-muted zzc-small">
+                        {taskCount} task{taskCount === 1 ? "" : "s"} assigned · {done} completed
+                      </p>
+                    </div>
+                    <span className="sales-status-pill active">{pct === null ? "no tasks yet" : `${pct}% complete`}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {subTab === "coverage" && (
+        <>
+          <div className="sales-coverage-grid">
+            <div className="sales-crm-card">
+              <h3>Pin codes in scope {selectedRegion !== ALL_REGIONS && `— ${selectedRegion}`}</h3>
+              <div className="sales-pincode-pills">
+                {scopePincodes.length === 0 ? (
+                  <p className="zzc-muted zzc-small">No pin codes covered yet.</p>
+                ) : (
+                  scopePincodes.map((pc) => (
+                    <span className="sales-status-pill" key={pc}>
+                      {pc}
+                    </span>
+                  ))
+                )}
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            </div>
+
+            <div className="sales-crm-card">
+              <h3>Doctors in my area</h3>
+              <div className="sales-task-list">
+                {scopeDoctors.length === 0 ? (
+                  <p className="zzc-muted zzc-small">No doctors in scope's covered pin codes yet.</p>
+                ) : (
+                  scopeDoctors.map((d) => (
+                    <div className="sales-task-row" key={d.id}>
+                      <div>
+                        <p className="sales-task-title">{d.name}</p>
+                        <p className="zzc-muted zzc-small">
+                          {d.specializations || "—"} · pin {d.pincode}
+                        </p>
+                      </div>
+                      <span className="zzc-muted zzc-small">★ {d.rating ?? "—"}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="sales-crm-card">
+            <h3>Medicines, pet food &amp; accessories in my area</h3>
+            <table className="zzc-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Pin</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Rx</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scopeProducts.length === 0 ? (
+                  <tr className="zzc-empty-row">
+                    <td colSpan={5}>No products in scope's covered pin codes yet</td>
+                  </tr>
+                ) : (
+                  scopeProducts.map((p) => (
+                    <tr key={p.id}>
+                      <td>{p.name}</td>
+                      <td>{p.pincode}</td>
+                      <td>{formatINR(p.price)}</td>
+                      <td>{p.stock_quantity}</td>
+                      <td>{p.is_prescription_required === true || p.is_prescription_required === "Yes" ? "Yes" : "No"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

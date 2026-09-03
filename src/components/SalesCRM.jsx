@@ -84,7 +84,7 @@ export default function SalesCRM({ onExit }) {
     [alerts, coveredPincodes]
   );
 
-  const areaDoctors = useMemo(() => doctors.filter((d) => coveredPincodes.has(d.pincode)),[doctors, coveredPincodes]);
+  const areaDoctors = useMemo(() => doctors.filter((d) => coveredPincodes.has(d.pincode)), [doctors, coveredPincodes]);
   const areaProducts = useMemo(() => products.filter((p) => coveredPincodes.has(p.pincode)), [products, coveredPincodes]);
   const openTasksCount = myTasks.filter((t) => t.status !== "done").length;
   const unreadAlertsCount = myAlerts.filter((a) => !a.is_read).length;
@@ -239,6 +239,9 @@ export default function SalesCRM({ onExit }) {
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
+        <button className="sales-crm-tab">Monthly Plan</button>
+        <button className="sales-crm-tab">Standard Plan</button>
+        <button className="sales-crm-tab">Daily Plan</button>
       </div>
 
       {subTab === "tasks" && (

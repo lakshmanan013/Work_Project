@@ -3,7 +3,7 @@ export const SEARCH_CONFIG = {
   pets:            { placeholder: "name",           column: "name"          },
   medical_records: { placeholder: "title",          column: "title"         },
   vaccinations:    { placeholder: "Vaccine_Name",   column: "vaccine_name"  },
-  addresses:       { placeholder: "City",           column: "city"          },
+addresses:       { placeholder: "city or pincode", columns: ["city", "pincode"] },
   doctors:         { placeholder: "name",           column: "name"          },
   clinics:         { placeholder: "name",           column: "name"          },
   service_providers: { placeholder: "name",         column: "name"          },

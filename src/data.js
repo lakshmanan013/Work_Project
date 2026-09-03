@@ -46,7 +46,7 @@ export const NAV_GROUPS = [
     { key: "notifications", label: "Notifications" },
     { key: "membership_plans", label: "Membership plans" },
     { key: "plan_benefits", label: "Plan benefits" },
-    { key: "memberships", label: "Memberships" },
+    { key: "memberships", label: "Members" },
     { key: "support_tickets", label: "Support tickets" },
     { key: "geocoding_cache", label: "Geocoding cache" },
     { key: "audit_logs", label: "Audit logs" },
@@ -77,6 +77,11 @@ export const STATS = [
   { key: "support_tickets", label: "support_tickets", tableKey: "support_tickets" },
 ];
 
+export const SALES_TEAM_STATS = [
+  { key: "regional_managers", label: "regional managers", tableKey: "regional_managers" },
+  { key: "sales_managers", label: "sales managers", tableKey: "sales_managers" },
+  { key: "sales_executives", label: "sales executives", tableKey: "sales_executives" },
+];
 
 export function findLabel(key) {
   for (const group of NAV_GROUPS) {
