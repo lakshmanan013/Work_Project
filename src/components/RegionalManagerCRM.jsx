@@ -54,11 +54,8 @@ export default function RegionalManagerCRM({ onExit }) {
     [executives, selectedRegion]
   );
 
-  // Same schema limitation as the Sales Manager view: tasks only carry a
-  // pin code, not an assignee, so completion is attributed via
-  // pincode_coverage. There is also no Sales Manager entity in the backend
-  // at all yet (no /sales-managers data), so a manager-tier breakdown isn't
-  // possible — this rolls everything up to Sales Executive, region-wide.
+  // Tasks carry a pin code rather than an assignee, so completion is
+  // attributed through pincode_coverage and rolled up by region.
   const execStats = useMemo(() => {
     return execsInScope.map((exec) => {
       const myPincodes = new Set(coverage.filter((c) => c.executive_id === exec.id).map((c) => c.pincode));

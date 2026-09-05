@@ -460,13 +460,8 @@ export const TABLE_CONFIG = {
       { key: "is_active", type: "yesno", default: "Yes" },
     ],
   },
-  // NOTE: the backend (pets.py) has no /regional-managers or /sales-managers
-  // routes yet — these are sidebar entries prepared ahead of that backend
-  // work, using the same shape as sales_executives (the closest existing
-  // table) as a placeholder schema. Until those endpoints exist, opening
-  // either section will show the usual "couldn't reach backend" banner.
-  // Once real routes are added, this config likely won't need to change at
-  // all (only the field list, if the real schema differs).
+  // Manager records use the same core identity and territory fields as the
+  // Regional Manager and Sales Manager backend CRUD endpoints.
   regional_managers: {
     path: "/regional-managers",
     fields: [

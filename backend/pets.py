@@ -393,6 +393,24 @@ class AuditLog(Base):
     entity_type = sqlalchemy.Column(sqlalchemy.String(100))
     entity_id = sqlalchemy.Column(sqlalchemy.Integer)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")).replace(tzinfo=None))
+class RegionalManager(Base):
+    __tablename__ = "regional_managers"
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, index=True)
+    name = sqlalchemy.Column(sqlalchemy.String(150), nullable=False)
+    code = sqlalchemy.Column(sqlalchemy.String(100), unique=True, nullable=False)
+    phone = sqlalchemy.Column(sqlalchemy.String(30))
+    email = sqlalchemy.Column(sqlalchemy.String(100))
+    region = sqlalchemy.Column(sqlalchemy.String(150))
+    is_active = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
+class SalesManager(Base):
+    __tablename__ = "sales_managers"
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, index=True)
+    name = sqlalchemy.Column(sqlalchemy.String(150), nullable=False)
+    code = sqlalchemy.Column(sqlalchemy.String(100), unique=True, nullable=False)
+    phone = sqlalchemy.Column(sqlalchemy.String(30))
+    email = sqlalchemy.Column(sqlalchemy.String(100))
+    region = sqlalchemy.Column(sqlalchemy.String(150))
+    is_active = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
 class SalesExecutive(Base):
     __tablename__ = "sales_executives"
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, index=True)
@@ -682,6 +700,15 @@ class AuditLogCreate(pydantic.BaseModel):
     action: str
     entity_type: Optional[str] = None
     entity_id: Optional[int] = None
+class RegionalManagerCreate(pydantic.BaseModel):
+    name: str
+    code: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    region: Optional[str] = None
+    is_active: str = "Yes"
+class SalesManagerCreate(RegionalManagerCreate):
+    pass
 class SalesExecutiveCreate(pydantic.BaseModel):
     name: str
     code: str
@@ -3009,6 +3036,76 @@ def delete_auditlog(log_id: int,db: sqlalchemy.orm.Session = fastapi.Depends(get
     except Exception as e:
         db.rollback()
         raise fastapi.HTTPException(status_code=400, detail=str(e))
+def create_manager(data, manager_model, label, db):
+    existing = db.query(manager_model).filter(manager_model.code == data.code).first()
+    if existing:
+        raise fastapi.HTTPException(status_code=400, detail=f"{label} code already exists")
+    manager = manager_model(**data.model_dump(exclude={"is_active"}), is_active=yes_no_to_bool(data.is_active))
+    db.add(manager)
+    db.commit()
+    db.refresh(manager)
+    return model_response(manager)
+
+def update_manager(manager_id, data, manager_model, label, db):
+    manager = db.query(manager_model).filter(manager_model.id == manager_id).first()
+    if not manager:
+        raise fastapi.HTTPException(status_code=404, detail=f"{label} not found")
+    duplicate = db.query(manager_model).filter(manager_model.code == data.code, manager_model.id != manager_id).first()
+    if duplicate:
+        raise fastapi.HTTPException(status_code=400, detail=f"{label} code already exists")
+    for field, value in data.model_dump(exclude={"is_active"}).items():
+        setattr(manager, field, value)
+    manager.is_active = yes_no_to_bool(data.is_active)
+    db.commit()
+    db.refresh(manager)
+    return model_response(manager)
+
+def delete_manager(manager_id, manager_model, label, db):
+    manager = db.query(manager_model).filter(manager_model.id == manager_id).first()
+    if not manager:
+        raise fastapi.HTTPException(status_code=404, detail=f"{label} not found")
+    db.delete(manager)
+    db.commit()
+    return {"message": f"{label} deleted successfully", "id": manager_id}
+
+@app.post("/regional-managers")
+def create_regional_manager(data: RegionalManagerCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return create_manager(data, RegionalManager, "Regional manager", db)
+@app.get("/regional-managers")
+def get_regional_managers(db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return [model_response(item) for item in db.query(RegionalManager).all()]
+@app.get("/regional-managers/{manager_id}")
+def get_regional_manager(manager_id: int, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    manager = db.query(RegionalManager).filter(RegionalManager.id == manager_id).first()
+    if not manager:
+        raise fastapi.HTTPException(status_code=404, detail="Regional manager not found")
+    return model_response(manager)
+@app.put("/regional-managers/{manager_id}")
+def update_regional_manager(manager_id: int, data: RegionalManagerCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return update_manager(manager_id, data, RegionalManager, "Regional manager", db)
+@app.delete("/regional-managers/{manager_id}")
+def delete_regional_manager(manager_id: int, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return delete_manager(manager_id, RegionalManager, "Regional manager", db)
+
+@app.post("/sales-managers")
+def create_sales_manager(data: SalesManagerCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return create_manager(data, SalesManager, "Sales manager", db)
+@app.get("/sales-managers")
+def get_sales_managers(db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return [model_response(item) for item in db.query(SalesManager).all()]
+@app.get("/sales-managers/{manager_id}")
+def get_sales_manager(manager_id: int, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    manager = db.query(SalesManager).filter(SalesManager.id == manager_id).first()
+    if not manager:
+        raise fastapi.HTTPException(status_code=404, detail="Sales manager not found")
+    return model_response(manager)
+@app.put("/sales-managers/{manager_id}")
+def update_sales_manager(manager_id: int, data: SalesManagerCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return update_manager(manager_id, data, SalesManager, "Sales manager", db)
+@app.delete("/sales-managers/{manager_id}")
+def delete_sales_manager(manager_id: int, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    return delete_manager(manager_id, SalesManager, "Sales manager", db)
+
 @app.post("/sales-executives")
 def create_sales_executive(data: SalesExecutiveCreate,db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
     executive = SalesExecutive(
